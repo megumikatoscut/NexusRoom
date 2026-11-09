@@ -1,0 +1,55 @@
+# NexusRoom's SDK overlay. The selected Room model profile is supplied per run
+# through the child environment; its API key is never written into this file.
+
+- id: llm-pi-ai
+  config:
+    providers:
+      nexusroom:
+        displayName: NexusRoom
+        apiKeyEnv: NEXUSROOM_HARNESS_API_KEY
+        api: !!js process.env.NEXUSROOM_HARNESS_API
+        baseURL: !!js process.env.NEXUSROOM_HARNESS_BASE_URL
+        models:
+          - id: !!js process.env.NEXUSROOM_HARNESS_MODEL
+            input: !!js "JSON.parse(process.env.NEXUSROOM_HARNESS_MODEL_INPUT ?? '[\"text\",\"image\"]')"
+
+- id: sandbox-policy
+  config:
+    mode: !!js "process.env.DSH_PERMISSION_MODE ?? 'danger-full-access'"
+    workspaceRoot: !!js process.cwd()
+
+- id: approval
+  config:
+    policy: !!js "process.env.DSH_PERMISSION_MODE === 'workspace-write' ? 'ask' : 'never'"
+
+- insert:
+    - id: nexusroom-task-limits
+      name: '__NEXUSROOM_LIMITS_PLUGIN__'
+      config:
+        maxCalls: !!js "Number(process.env.NEXUSROOM_HARNESS_MAX_CALLS ?? 24)"
+        maxSteps: !!js "Number(process.env.NEXUSROOM_HARNESS_MAX_STEPS ?? 24)"
+
+    - id: nexusroom-approval-bridge
+      name: '__NEXUSROOM_APPROVAL_PLUGIN__'
+      config:
+        pipeName: !!js process.env.NEXUSROOM_APPROVAL_PIPE
+
+    - id: nexusroom-room-files
+      name: '__NEXUSROOM_ROOM_FILES_PLUGIN__'
+      config:
+        pipeName: !!js process.env.NEXUSROOM_ROOM_FILES_PIPE
+
+    - id: nexusroom-computer-use
+      name: '../../../third_party/deepseek-harness/packages/computer-use/computer-use/lib/index.js'
+
+    - id: nexusroom-cua-driver-native
+      name: '../../../third_party/deepseek-harness/packages/experimental/computer-use-cua-driver-native/lib/index.js'
+
+    - id: nexusroom-browser-use
+      name: '../../../third_party/deepseek-harness/packages/browser-use/browser-use/lib/index.js'
+
+    - id: nexusroom-playwright-browser
+      name: '../../../third_party/deepseek-harness/packages/experimental/browser-use-playwright-mcp/lib/index.js'
+      config:
+        mode: launch
+        headless: !!js "process.env.NEXUSROOM_HARNESS_BROWSER_HEADLESS !== 'false'"

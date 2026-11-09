@@ -1,0 +1,2 @@
+2bfc7bc4dd9f7af8743b11dca8f708db9d688dfb27d077568e43ef8423bd89bb  NexusRoom-Windows-x64-1.0.0.exe
+2fde93e70dcaa65770b4dc2532038e6e9e0e46500cccc8170119b48cd706e4c1  NexusRoom-Android-1.0.0.apk

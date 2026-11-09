@@ -1,0 +1,10 @@
+{
+  "root": [
+    "README.md",
+    "LICENSE"
+  ],
+  "docs": [
+    "THIRD_PARTY_NOTICES.md",
+    "WebView2-LICENSE.txt"
+  ]
+}

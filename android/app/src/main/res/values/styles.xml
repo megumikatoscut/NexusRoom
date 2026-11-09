@@ -1,0 +1,15 @@
+<resources>
+    <style name="AppTheme" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">sans</item><item name="android:colorAccent">#118B77</item><item name="android:windowLightStatusBar">true</item><item name="android:statusBarColor">#F5F8F7</item><item name="android:navigationBarColor">#F5F8F7</item><item name="android:windowActionModeOverlay">true</item><item name="android:windowLightNavigationBar">true</item><item name="android:windowBackground">#F5F8F7</item>
+    </style>
+    <style name="LaunchProxyTheme" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:colorAccent">@android:color/transparent</item>
+        <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:windowDisablePreview">true</item>
+        <item name="android:windowIsFloating">false</item>
+    </style>
+    <string name="accessibility_description">仅在 NexusRoom 中允许远程控制后，接收电脑的点击、滑动、输入和系统按键。可随时在 NexusRoom 关闭控制；不会自主操作设备。</string>
+</resources>

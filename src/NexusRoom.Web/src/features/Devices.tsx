@@ -1,0 +1,30 @@
+import { useState } from 'react';
+import { Screen } from './Screen';
+import { Smartphone, Keyboard, MonitorPlay, ShieldCheck, Battery, Trash2, Send, X, ClipboardCopy } from 'lucide-react';
+import { api, command } from '../api';
+import { useRoom } from '../context';
+import { Busy, Empty, Field, Modal, Status } from '../components/UI';
+import { activityLabel } from '../types';
+
+export function Devices() {
+ const {state,selected,select,act,setInvite}=useRoom();
+ const [text,setText]=useState(''),[quality,setQuality]=useState('balanced'),[fps,setFps]=useState(30),[remove,setRemove]=useState(false),[busy,setBusy]=useState(false),[requested,setRequested]=useState(false);
+ const device=state?.devices.find(d=>d.id===selected)??state?.devices[0];
+ if(!state)return null;
+ if(!device)return <><div className="page-heading"><div><h1>设备控制</h1><p>在同一网络里，自然地使用你的手机。</p></div><button className="btn primary" onClick={()=>setInvite(true)}>添加设备</button></div><section className="panel"><Empty/></section></>;
+ const mirror=device.permissions.screen&&device.activity==='working';
+ const pending=!mirror&&(state.media.pending?.includes(device.id)??requested)&&device.online;
+ const usable=device.online&&device.activity!=='busy', controllable=usable&&device.permissions.control;
+ const profile={maxSize:quality==='sharp'?1920:quality==='smooth'?960:1280,fps,bitrate:quality==='sharp'?8:quality==='smooth'?4:6};
+ const toggle=()=>{setBusy(true);void act(async()=>{if(mirror||pending){await api(`/api/devices/${device.id}/mirror`,undefined,'DELETE');setRequested(false);}else{const r=await api<{requiresConsent:boolean}>(`/api/devices/${device.id}/mirror`,profile);setRequested(r.requiresConsent);}},mirror||pending?'共享已结束':'共享请求已发送，请在手机确认').finally(()=>setBusy(false));};
+ return <><div className="page-heading"><div><h1>设备控制</h1><p>画面、声音与操作，汇聚在同一个工作空间。</p></div><select className="device-select" aria-label="选择控制设备" value={device.id} onChange={e=>{setRequested(false);select(e.target.value);}}>{state.devices.map(d=><option value={d.id} key={d.id}>{d.name} · {activityLabel(d)}</option>)}</select></div>
+ {device.activity==='busy'&&<div className="callout warning">{device.ownerRoom||'另一房间'}正在使用此设备。控制和 Agent 暂不可用，文件仍可传输。</div>}
+ {device.online&&device.capture?.error&&<div className="callout warning capture-alert" role="alert"><strong>{device.capture.state==='error'?'屏幕共享未能启动':'屏幕共享已停止'}</strong><p>{device.capture.error}</p><span>可再次点击「开始远程控制」。如果仍失败，请将此提示提供给支持人员。</span></div>}
+ <div className="control-grid"><div><Screen key={device.id} device={device}/><form className="keyboard-bar" onSubmit={e=>{e.preventDefault();if(text)void act(()=>command(device.id,'edit',{action:'insert',text}),'文字已输入').then(ok=>{if(ok)setText('');});}}><Keyboard size={19}/><input aria-label="远程输入文字" value={text} onChange={e=>setText(e.target.value)} maxLength={8192} placeholder="也可以在这里输入文字，发送到手机光标处…" disabled={!controllable}/><button className="btn primary" disabled={!text||!controllable}><Send size={16}/>输入</button></form><p className="fine-print">点击画面后可直接使用电脑输入法。支持 Ctrl+C / V / X / A；密码框及部分自绘输入框受 Android 安全限制。</p></div>
+ <aside className="control-details"><section className="panel"><div className="device-detail-heading"><div className="device-icon"><Smartphone size={27}/></div><div><h2>{device.name}</h2><Status online={device.online} label={activityLabel(device)}/></div></div><dl className="detail-list"><dt>系统</dt><dd>Android {device.version}</dd><dt>网络地址</dt><dd>{device.ip}</dd><dt>电量</dt><dd className="inline"><Battery size={16}/>{device.battery<0?'未知':`${device.battery}%`}{device.charging?' · 充电中':''}</dd><dt>连接</dt><dd>加密局域网连接</dd></dl></section>
+ <section className="panel"><h2><MonitorPlay size={18}/>屏幕共享</h2><p>{pending?'等待手机确认。请打开 NexusRoom 接受共享请求。':'点击开始后，在手机完成系统投屏确认即可连接。'}</p><div className="form-columns"><Field label="画质"><select value={quality} onChange={e=>setQuality(e.target.value)}><option value="balanced">均衡 · 1280p</option><option value="sharp">清晰 · 1920p</option><option value="smooth">流畅 · 960p</option></select></Field><Field label="帧率"><select value={fps} onChange={e=>setFps(Number(e.target.value))}><option value={15}>15 FPS</option><option value={30}>30 FPS</option><option value={60}>60 FPS</option></select></Field></div>{mirror&&<button className="btn secondary full" disabled={busy||!controllable} onClick={()=>{setBusy(true);void act(()=>api(`/api/devices/${device.id}/mirror`,profile),'画质已更新').finally(()=>setBusy(false));}}>应用画质</button>}
+ <button className={`btn ${mirror||pending?'secondary':'primary'} full preview-settings`} disabled={busy||!controllable||(!mirror&&!pending&&!device.permissions.screenAllowed)} onClick={toggle}>{busy?<Busy/>:mirror||pending?<X size={16}/>:<MonitorPlay size={17}/>} {mirror?'结束远程控制':pending?'取消共享请求':'开始远程控制'}</button>{!device.permissions.screenAllowed&&<p className="fine-print">先在手机开启「允许电脑请求屏幕」。</p>}
+ <button className="btn secondary full preview-settings" disabled={!usable||!device.permissions.clipboard} onClick={()=>void act(()=>api(`/api/devices/${device.id}/clipboard/pull`,{}),'手机剪贴板已同步到电脑')}><ClipboardCopy size={16}/>手机剪贴板 → 电脑</button></section>
+ <section className="panel permissions"><h2><ShieldCheck size={18}/>Android 授权</h2>{([['screenAllowed','请求屏幕'],['control','远程控制'],['audio','播放声音'],['files','文件传输'],['clipboard','剪贴板同步'],['agent','Agent 操作']] as const).map(([key,label])=><div key={key}><span>{label}</span><span className={device.permissions[key]?'permission-on':'muted'}>{device.permissions[key]?'已允许':'未允许'}</span></div>)}<p>手机保留每个房间的授权选择，你可随时撤销。</p></section><button className="text-btn danger" onClick={()=>setRemove(true)}><Trash2 size={14}/>移出此房间</button></aside></div>
+ {remove&&<Modal title="移出设备？" close={()=>setRemove(false)}><p className="modal-description">结束 {device.name} 在此房间的访问。手机将恢复加入入口，可使用有效房间密码重新加入。其他房间不受影响。</p><div className="modal-actions"><button className="btn secondary" onClick={()=>setRemove(false)}>取消</button><button className="btn destructive" onClick={()=>void act(()=>api(`/api/devices/${device.id}`,undefined,'DELETE'),'设备已移出').then(ok=>{if(ok)setRemove(false);})}>移出设备</button></div></Modal>}</>;
+}

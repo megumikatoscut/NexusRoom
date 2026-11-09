@@ -1,0 +1,61 @@
+import { chromium } from 'playwright';
+import { execFileSync } from 'node:child_process';
+import assert from 'node:assert/strict';
+import { mkdir, readFile } from 'node:fs/promises';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const version = JSON.parse(await readFile(resolve(root, 'release.json'), 'utf8')).version;
+const evidence = process.env.NEXUS_UI_EVIDENCE_DIR || resolve(root, '.local', 'ui-evidence');
+await mkdir(evidence, { recursive: true });
+const launchFile = (process.env.NEXUS_UI_LAUNCH_FILE || resolve(root, '.local', 'development-v' + version, 'launch.dat')).replaceAll("'", "''");
+const launch = JSON.parse(execFileSync('powershell', ['-NoProfile','-Command', `Add-Type -AssemblyName System.Security; [Text.Encoding]::UTF8.GetString([Security.Cryptography.ProtectedData]::Unprotect([IO.File]::ReadAllBytes('${launchFile}'),$null,[Security.Cryptography.DataProtectionScope]::CurrentUser))`], { encoding: 'utf8', windowsHide: true }).trim());
+const browser = await chromium.launch({ channel: 'chrome', headless: true });
+const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+const errors = [];
+page.on('pageerror', e => errors.push(e.message));
+try {
+  await page.goto(launch);
+  await page.getByRole('heading', { name: '房间总览', exact: true }).waitFor();
+  const state = await page.evaluate(() => fetch('/api/state').then(response => response.json()));
+  const pcTargetId = `pc:${state.room.id}`;
+  assert.match(await page.title(), /NexusRoom/);
+  await page.screenshot({ path: `${evidence}/nexusroom-overview.png` });
+  await page.getByRole('button', { name: '打开 Agent 悬浮窗', exact: true }).click();
+  const panel = page.getByRole('dialog', { name: 'Nexus Agent 悬浮窗' });
+  await panel.waitFor();
+  const initial = await panel.boundingBox();
+  const handle = page.getByRole('button', { name: '拖动 Agent 悬浮窗，也可用方向键移动' });
+  const h = await handle.boundingBox();
+  await page.mouse.move(h.x + 120, h.y + 20); await page.mouse.down(); await page.mouse.move(h.x - 250, h.y + 95, { steps: 12 }); await page.mouse.up();
+  const moved = await panel.boundingBox(); assert.ok(moved.x < initial.x - 200);
+  await page.getByRole('textbox', { name: '输入 Agent 任务' }).fill('隐藏后仍保留的任务草稿');
+  await page.getByRole('button', { name: '隐藏 Agent 悬浮窗' }).click();
+  assert.equal(await panel.isVisible(), false);
+  await page.getByRole('button', { name: 'Agent 控制台', exact: true }).click();
+  assert.equal(await page.getByRole('textbox', { name: '输入 Agent 任务' }).inputValue(), '隐藏后仍保留的任务草稿');
+  assert.equal((await panel.boundingBox()).x, moved.x);
+  // Controlled provider fixture exercises excessive output without sending device data anywhere.
+  await panel.getByRole('combobox', { name: '选择 Agent 设备' }).selectOption(pcTargetId);
+  await page.route('**/api/agent/runs', route => route.fulfill({ json: [{ id: 'qa-long-output', deviceId: pcTargetId, mode: 'request', task: '长输出布局回归检查', status: 'completed', startedAt: new Date().toISOString(), events: [{ time: new Date().toISOString(), kind: 'assistant', text: ('布局保持稳定，输出在窗口内滚动。\n').repeat(500) + 'x'.repeat(3000) }] }] }));
+  await page.locator('.conversation').getByText('长输出布局回归检查', { exact: true }).waitFor();
+  const after = await panel.boundingBox(); assert.equal(after.height, moved.height); assert.equal(after.width, moved.width);
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+  await page.screenshot({ path: `${evidence}/nexusroom-agent-floating.png` });
+  await page.getByRole('button', { name: '隐藏 Agent 悬浮窗' }).click();
+  await page.getByRole('button', { name: '设备控制', exact: true }).click();
+  await page.getByRole('heading', { name: '设备控制', exact: true }).waitFor();
+  if (await page.getByRole('button', { name: '结束远程控制' }).isVisible()) {
+    await page.getByText('实时连接', { exact: true }).waitFor({ timeout: 15000 });
+    const pixels = await page.locator('canvas').evaluate(c => ({ width: c.width, height: c.height, colors: new Set(c.getContext('2d').getImageData(0, 0, c.width, c.height).data).size }));
+    assert.ok(pixels.width > 500 && pixels.colors > 20, 'Real decoded device frame must be visible');
+  }
+  await page.screenshot({ path: `${evidence}/nexusroom-control.png` });
+  await page.setViewportSize({ width: 430, height: 900 });
+  await page.getByRole('button', { name: '打开 Agent 悬浮窗', exact: true }).click();
+  const mobile = await panel.boundingBox(); assert.ok(mobile.x >= 0 && mobile.x + mobile.width <= 430 && mobile.y + mobile.height <= 900);
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+  await page.screenshot({ path: `${evidence}/nexusroom-mobile.png` });
+  assert.deepEqual(errors, []);
+  console.log('PASS page identity, meaningful render, no runtime errors, drag, hide/reopen, draft retention, long-output bounds, mobile viewport containment');
+} finally { await browser.close(); }

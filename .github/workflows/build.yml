@@ -1,0 +1,55 @@
+name: Build both clients
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.401
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Install fixed SDK components
+        shell: pwsh
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0" "platform-tools"
+      - name: Prepare and compile fresh sources
+        shell: pwsh
+        run: |
+          ./scripts/setup-dev.ps1 -ConfigureOnly -NoInstall -NonInteractive -AndroidSdk $env:ANDROID_HOME
+          ./scripts/build.ps1 -SkipPackage -SkipTests
+      - name: Keyless protocol and Java regressions
+        shell: pwsh
+        run: |
+          . ./scripts/common.ps1
+          Set-NexusBuildEnvironment
+          Add-NexusToolPath (Join-Path $env:JAVA_HOME 'bin')
+          $node = Get-NexusReleaseNode
+          & $node.Executable ./tests/integration.mjs
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          & $node.Executable --test ./tests/pc-harness-policy.test.mjs ./tests/pc-room-files.test.mjs ./tests/communication-rtc.test.mjs ./tests/runtime-path.test.mjs
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          ./tests/android-room-identity.ps1
+          ./tests/android-room-session.ps1
+      - name: Documentation and public evidence consistency
+        shell: pwsh
+        run: |
+          . ./scripts/common.ps1
+          Set-NexusBuildEnvironment
+          $node = Get-NexusReleaseNode
+          & $node.Executable ./scripts/check-documentation.mjs
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          & $node.Executable ./tests/current-release-consistency.mjs --source-only
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          if (Test-Path -LiteralPath ../06_Engineering_Evidence/Verification/Results) {
+            & $node.Executable ./tests/current-release-consistency.mjs
+            if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          }

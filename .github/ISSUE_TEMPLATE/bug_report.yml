@@ -1,0 +1,29 @@
+name: Bug report / 问题报告
+description: Report a reproducible issue without private data. / 请移除私密数据后报告可复现问题。
+title: "[Bug] "
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Application version and Android build number / 应用版本与 Android 构建号
+      placeholder: 1.0.0 / 15
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Device and network environment / 设备与网络环境
+      description: Include OS, device, connection, VPN and LAN topology. / 请说明系统、设备、连接方式、VPN 与局域网拓扑。
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps, expected and actual behavior / 复现步骤、预期与实际行为
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Redacted errors or screenshots / 脱敏错误信息或截图
+      description: Remove keys, tokens, passwords, invitations and private chats. / 请移除密钥、令牌、密码、邀请与私密聊天。

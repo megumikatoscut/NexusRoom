@@ -1,0 +1,19 @@
+* text=auto eol=lf
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.sh text eol=lf
+*.jar binary
+*.apk binary
+*.png binary
+*.onnx binary
+*.aar binary
+*.tar.gz binary
+*.ico binary
+*.docx binary
+# Keep byte-pinned model inputs and original license texts unchanged on checkout.
+*.txt -text
+third_party/sherpa-onnx-*/** -text
+docs/licenses/** -whitespace
+docs/WebView2-LICENSE.txt -whitespace
+android/app/src/main/assets/licenses/** -whitespace

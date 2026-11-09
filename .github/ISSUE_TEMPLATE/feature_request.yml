@@ -1,0 +1,16 @@
+name: Feature request / 功能建议
+description: Describe a specific use case and expected behavior. / 请说明具体场景与预期行为。
+title: "[Feature] "
+body:
+  - type: textarea
+    id: scenario
+    attributes:
+      label: Use case / 使用场景
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected behavior and required permissions / 预期行为与所需权限
+    validations:
+      required: true

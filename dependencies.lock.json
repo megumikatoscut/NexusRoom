@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "dotnet": { "sdk": "10.0.401", "runtimeMajor": 10, "wingetId": "Microsoft.DotNet.SDK.10" },
+  "java": { "minimumMajor": 17, "recommendedMajor": 17, "wingetId": "EclipseAdoptium.Temurin.17.JDK" },
+  "android": {
+    "platform": "android-35",
+    "buildTools": "35.0.0",
+    "minimumApi": 29,
+    "platformToolsPackage": "platform-tools",
+    "platformToolsSelection": "Reuse installed Platform Tools; sdkmanager installs the current stable revision only when missing.",
+    "commandLineTools": {
+      "version": "22.0",
+      "minimumJavaMajor": 17,
+      "url": "https://dl.google.com/android/repository/commandlinetools-win-15859902_latest.zip",
+      "sha256": "90ae805d20434428bffcb699c290860f19bb5f66a67e6b330067e3de801fb04a",
+      "archiveSize": 155655386,
+      "metadataUrl": "https://dl.google.com/android/repository/repository2-3.xml",
+      "metadataSha1": "b9862337a13e2809a5159dc3a08d058091bd59f6",
+      "sha256Source": "https://developer.android.com/studio"
+    }
+  },
+  "gradle": {
+    "version": "8.11.1",
+    "wrapperUrl": "https://raw.githubusercontent.com/gradle/gradle/v8.11.1/gradle/wrapper/gradle-wrapper.jar",
+    "wrapperSha256": "2db75c40782f5e8ba1fc278a5574bab070adccb2d21ca5a6e5ed840888448046",
+    "distributionSha256": "f397b287023acdba1e9f6fc5ea72d22dd63669d59ed4a289a29b1a76eee151c6"
+  },
+  "pnpm": { "version": "11.7.0" },
+  "scrcpy": {
+    "version": "4.1",
+    "url": "https://github.com/Genymobile/scrcpy/releases/download/v4.1/scrcpy-win64-v4.1.zip",
+    "sha256": "5b12172b3264b2889f4583ee64752ce832e29bc8b1089dca81093459697165db"
+  },
+  "harness": {
+    "sourceOfTruth": "release.json:pcKernel",
+    "packageManagerLock": "pnpm-lock.yaml at the pinned upstream commit",
+    "primaryRuntimeLock": "scripts/primary-runtime/lock.json at the pinned upstream commit"
+  }
+}

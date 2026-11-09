@@ -1,0 +1,4 @@
+plugins { id 'com.android.application' version '8.9.1' apply false }
+if (System.getenv('NEXUS_ANDROID_BUILD_DIR')) {
+    layout.buildDirectory.set(file(System.getenv('NEXUS_ANDROID_BUILD_DIR')))
+}

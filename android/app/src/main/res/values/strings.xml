@@ -1,0 +1,9 @@
+<resources>
+    <string name="clipboard_bridge_explanation">NexusRoom 剪贴板桥已启用。此输入法用于允许授权房间在后台读取当前剪贴板，不提供文字键盘。若要输入文字，请切换回常用键盘；切换后后台读取权限将随之关闭。</string>
+    <string name="profile_count_summary">此房间目前有 %1$d 个模型方案。Android 和电脑共享同一份配置。</string>
+    <string name="profile_count_title">房间模型方案 · %1$d</string>
+    <string name="profile_load_failed">读取房间方案失败：%1$s</string>
+    <string name="agent_planning">%1$s\n\n正在规划步骤…</string>
+    <string name="agent_failed">未能执行：%1$s</string>
+    <string name="pc_remote_session_ended">%1$s；请退出后重新请求</string>
+</resources>

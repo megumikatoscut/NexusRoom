@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <OutputType>WinExe</OutputType>
+    <Nullable>enable</Nullable>
+    <Version>1.0.0</Version>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationIcon>..\..\PIC\PC.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\PIC\PC.ico" LogicalName="NexusRoom.PC.ico" />
+    <PackageReference Include="NAudio" Version="2.2.1" />
+    <PackageReference Include="org.k2fsa.sherpa.onnx" Version="1.13.8" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3650.58" />
+    <Content Update="wwwroot\**" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Agent\harness-sdk.patch.yml" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Agent\harness-approval.mjs" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Agent\harness-limits.mjs" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Agent\harness-room-files.mjs" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Agent\harness-runtime-path.mjs" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\..\third_party\sherpa-onnx-kws-zipformer-zh-en-3M-2025-12-20\encoder-epoch-13-avg-2-chunk-16-left-64.int8.onnx" Link="voice\kws\encoder.int8.onnx" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\..\third_party\sherpa-onnx-kws-zipformer-zh-en-3M-2025-12-20\decoder-epoch-13-avg-2-chunk-16-left-64.onnx" Link="voice\kws\decoder.onnx" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\..\third_party\sherpa-onnx-kws-zipformer-zh-en-3M-2025-12-20\joiner-epoch-13-avg-2-chunk-16-left-64.int8.onnx" Link="voice\kws\joiner.int8.onnx" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\..\third_party\sherpa-onnx-kws-zipformer-zh-en-3M-2025-12-20\tokens.txt" Link="voice\kws\tokens.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\..\third_party\sherpa-onnx-streaming-zipformer-small-bilingual-zh-en-2023-02-16\encoder-epoch-99-avg-1.int8.onnx" Link="voice\asr\encoder.int8.onnx" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\..\third_party\sherpa-onnx-streaming-zipformer-small-bilingual-zh-en-2023-02-16\decoder-epoch-99-avg-1.onnx" Link="voice\asr\decoder.onnx" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\..\third_party\sherpa-onnx-streaming-zipformer-small-bilingual-zh-en-2023-02-16\joiner-epoch-99-avg-1.int8.onnx" Link="voice\asr\joiner.int8.onnx" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\..\third_party\sherpa-onnx-streaming-zipformer-small-bilingual-zh-en-2023-02-16\tokens.txt" Link="voice\asr\tokens.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="Voice\keywords.txt" Link="voice\kws\keywords.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+  <Target Name="RemoveUnusedWpfReference" BeforeTargets="ResolveAssemblyReferences">
+    <ItemGroup><Reference Remove="@(Reference)" Condition="'%(Reference.Filename)' == 'Microsoft.Web.WebView2.Wpf'" /></ItemGroup>
+  </Target>
+
+</Project>

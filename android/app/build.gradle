@@ -1,0 +1,51 @@
+plugins { id 'com.android.application' }
+// Allows CI and QA builds to isolate Android intermediates when another build or IDE
+// still has files under the default app/build directory open.
+if (System.getenv('NEXUS_ANDROID_APP_BUILD_DIR')) {
+    layout.buildDirectory.set(file(System.getenv('NEXUS_ANDROID_APP_BUILD_DIR')))
+}
+android {
+    namespace 'com.nexusroom.android'
+    compileSdk 35
+    defaultConfig { applicationId 'com.nexusroom.android'; minSdk 29; targetSdk 35; versionCode 15; versionName '1.0.0' }
+    buildFeatures { buildConfig true }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+    defaultConfig { ndk { abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86_64' } }
+    sourceSets.main.assets.srcDir layout.buildDirectory.dir('generated/voice-assets')
+    buildTypes { release { minifyEnabled false; vcsInfo { include false }; proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro' } }
+    lint { abortOnError true; disable 'ObsoleteSdkInt' }
+}
+// JVM regressions execute the production Java classes outside Android and need
+// a real JSON implementation. This configuration never enters either APK.
+configurations { roomRegressionRuntime }
+tasks.register('prepareRoomRegressionDependencies') {
+    doLast { configurations.roomRegressionRuntime.resolve() }
+}
+dependencies {
+    implementation files('libs/sherpa-onnx-static-link-onnxruntime-1.13.8.aar')
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.9.25'
+    implementation 'io.github.webrtc-sdk:android:144.7559.15'
+    roomRegressionRuntime 'org.json:json:20240303'
+    implementation 'androidx.core:core:1.13.1'
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
+}
+
+// Share the downloaded int8 models with Windows without committing duplicate
+// copies. Assets are local and never downloaded by the installed application.
+tasks.register('prepareVoiceAssets', Sync) {
+    into layout.buildDirectory.dir('generated/voice-assets/voice')
+    from('../../third_party/sherpa-onnx-kws-zipformer-zh-en-3M-2025-12-20') {
+        into 'kws'; include '*.onnx', 'tokens.txt'
+    }
+    from('../../third_party/sherpa-onnx-streaming-zipformer-small-bilingual-zh-en-2023-02-16') {
+        into 'asr'; include '*.onnx', 'tokens.txt'
+    }
+    doFirst {
+        if (!file('../../third_party/sherpa-onnx-kws-zipformer-zh-en-3M-2025-12-20/tokens.txt').isFile() ||
+            !file('../../third_party/sherpa-onnx-streaming-zipformer-small-bilingual-zh-en-2023-02-16/tokens.txt').isFile()) {
+            throw new GradleException('Offline voice models are missing from third_party. See docs/VOICE_INTERACTION.md.')
+        }
+    }
+}
+tasks.named('preBuild').configure { dependsOn 'prepareVoiceAssets' }
