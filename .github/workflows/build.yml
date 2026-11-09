@@ -23,6 +23,15 @@ jobs:
       - name: Install fixed SDK components
         shell: pwsh
         run: sdkmanager "platforms;android-35" "build-tools;35.0.0" "platform-tools"
+      - name: Resolve physical Android SDK directory
+        shell: pwsh
+        run: |
+          $sdkDirectory = Get-Item -LiteralPath $env:ANDROID_HOME -Force
+          if ($sdkDirectory.Attributes -band [IO.FileAttributes]::ReparsePoint) {
+            $sdkDirectory = $sdkDirectory.ResolveLinkTarget($true)
+          }
+          "ANDROID_HOME=$($sdkDirectory.FullName)" >> $env:GITHUB_ENV
+          "ANDROID_SDK_ROOT=$($sdkDirectory.FullName)" >> $env:GITHUB_ENV
       - name: Prepare and compile fresh sources
         shell: pwsh
         run: |
